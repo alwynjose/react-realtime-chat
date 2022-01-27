@@ -5,7 +5,10 @@ import "primeicons/primeicons.css";
 import { InputText } from 'primereact/inputtext';
 import { Button } from 'primereact/button';
 import { Timeline } from 'primereact/timeline';
-import { useState } from "react";
+import React, { useState } from "react";
+import { io } from "socket.io-client";
+
+const socket = io("http://locahost:3001"); // connect to server
 
 function App() {
   const [author, setAuthor] = useState("");
@@ -14,11 +17,13 @@ function App() {
     { author: "Bot", message: "Hello" },
   ]);
 
+  socket.on("chat", (arg) => setMessages([...messages, arg]));
+  
   const addMessage = () => {
     const send = { author, message }; // using the shorthand, else { author: author, message: message }
     setMessages([...messages, send]);
     setMessage("");
-    console.log(send);
+    socket.emit("chat", send); // emit the message back to the server to the channel "chat"
   };
   return (
     <div>
@@ -32,6 +37,11 @@ function App() {
           <Button label="Send" onClick={() => addMessage()}/>
         </div>
       </div> 
+
+        <div className="card">
+          <h5>Conversation</h5>
+          <Timeline value={messages} opposite = {(item) => item.author} content={ (item) => (<small className="p-text-secondary">{item.message}</small>)} />
+        </div>
     </div>
   );
 }
